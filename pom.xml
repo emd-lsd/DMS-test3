@@ -41,6 +41,27 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Spring Data JPA -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- PostgreSQL Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Flink JDBC Connector -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-jdbc</artifactId>
+            <!-- Убедитесь, что версия Flink совпадает с остальными Flink-зависимостями -->
+            <version>3.1.1-1.17</version> <!-- Замените ${flink.version} на вашу версию Flink -->
+        </dependency>
+
         <!-- Apache Flink -->
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -74,6 +95,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional> <!-- Lombok нужен только на этапе компиляции -->
         </dependency>
     </dependencies>
 
