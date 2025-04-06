@@ -126,6 +126,12 @@
             <optional>true</optional> <!-- Lombok нужен только на этапе компиляции -->
         </dependency>
 
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <!-- Версия управляется Spring Boot или укажите явно -->
+        </dependency>
+
     </dependencies>
 
     <build>
