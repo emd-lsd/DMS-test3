@@ -1,0 +1,170 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 1rem 0;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+}
+
+/* Основной контейнер с Flexbox */
+.stand-container {
+    display: flex;
+    flex-wrap: wrap; /* Позволяет блокам переноситься на новую строку */
+    gap: 1.5rem;      /* Пространство между блоками */
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto; /* Центрирование контейнера */
+}
+
+/* Стили для каждого блока */
+.stand-block {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    /* Распределение ширины:
+       flex-grow: 1; - позволяет блоку расти
+       flex-shrink: 1; - позволяет блоку сжиматься
+       flex-basis: calc(50% - 1.5rem); - базовая ширина (2 блока в ряд минус gap) */
+    flex: 1 1 calc(50% - 1.5rem);
+    box-sizing: border-box; /* Учитывать padding и border в ширине */
+    min-width: 300px; /* Минимальная ширина блока до переноса */
+}
+
+/* Стили для элементов форм */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: bold;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select {
+    width: 95%; /* Немного меньше 100% для отступов */
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+button {
+    background-color: #5cb85c;
+    color: white;
+    padding: 0.7rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: #4cae4c;
+}
+
+/* Область для сообщений */
+.message-area {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    min-height: 1.5em; /* Чтобы не прыгала высота */
+    font-size: 0.9em;
+}
+.message-area.success {
+    background-color: #dff0d8;
+    color: #3c763d;
+    border: 1px solid #d6e9c6;
+}
+.message-area.error {
+    background-color: #f2dede;
+    color: #a94442;
+    border: 1px solid #ebccd1;
+}
+
+/* Статистика и График */
+.stats-summary {
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+.chart-container {
+    position: relative;
+    height: 250px; /* Задать высоту для canvas */
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* Live Log */
+.live-log-controls {
+    margin-bottom: 0.5rem;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.live-log-controls label {
+    margin-bottom: 0; /* Убрать отступ снизу у label в этой группе */
+}
+#live-log-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px; /* Ограничить высоту списка */
+    overflow-y: auto;  /* Добавить скролл */
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+#live-log-list li {
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid #eee;
+    font-size: 0.85em;
+    word-break: break-word; /* Перенос длинных строк */
+}
+#live-log-list li:last-child {
+    border-bottom: none;
+}
+#live-log-list li:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+#live-log-list li.risk-low {
+    border-left: 5px solid rgba(75, 192, 192, 0.8); /* Зеленоватый */
+}
+#live-log-list li.risk-medium {
+    border-left: 5px solid rgba(255, 206, 86, 0.8); /* Желтый */
+}
+#live-log-list li.risk-high {
+    border-left: 5px solid rgba(255, 99, 132, 0.8);   /* Красный */
+}
+#live-log-list li.risk-review {
+    border-left: 5px solid rgba(153, 102, 255, 0.8); /* Фиолетовый */
+}
+#live-log-list li.risk-unknown {
+    border-left: 5px solid rgba(201, 203, 207, 0.8); /* Серый */
+}
+
+/* Адаптивность: когда экран узкий, блоки встают в один столбец */
+@media (max-width: 768px) {
+    .stand-container {
+        padding: 1rem;
+        gap: 1rem;
+    }
+    .stand-block {
+        flex-basis: 100%; /* Занимать всю ширину */
+    }
+}
