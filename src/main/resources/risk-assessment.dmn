@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1r8hu1i" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.33.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" id="Definitions_1r8hu1i" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.33.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
   <decision id="Decision_0zfdrow" name="risk-assessment">
     <decisionTable id="DecisionTable_0y0yxhd" hitPolicy="FIRST">
       <input id="Input_1" label="Transaction Amount">
@@ -12,13 +12,53 @@
           <text>country</text>
         </inputExpression>
       </input>
-      <output id="Output_1" label="Risk Score" name="riskScore" typeRef="string" />
+      <input id="InputClause_1m87kme" label="Payment Method">
+        <inputExpression id="LiteralExpression_0z2bfme" typeRef="string">
+          <text>paymentMethod</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1s2i1tk" label="Customer Age">
+        <inputExpression id="LiteralExpression_10dmm45" typeRef="integer">
+          <text>customerAge</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1dnoup4" label="Customer History Score" biodi:width="192">
+        <inputExpression id="LiteralExpression_0vfx0ar" typeRef="integer">
+          <text>customerHistoryScore</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1ie06b9" label="New device used">
+        <inputExpression id="LiteralExpression_0z3yue2" typeRef="boolean">
+          <text>isNewDevice</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0yovjwe" label="Currency">
+        <inputExpression id="LiteralExpression_08dr538" typeRef="string">
+          <text>currency</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="Risk Score" name="riskLevel" typeRef="string" />
       <rule id="DecisionRule_129pujf">
         <inputEntry id="UnaryTests_0quo322">
-          <text>&gt; 1000</text>
+          <text>&gt; 10000</text>
         </inputEntry>
         <inputEntry id="UnaryTests_1c625u1">
           <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1w8qpbn">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0jdkg9h">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_135piqj">
+          <text>&lt; 30</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0lw64sh">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_07030iy">
+          <text></text>
         </inputEntry>
         <outputEntry id="LiteralExpression_1t1q3um">
           <text>"HIGH"</text>
@@ -26,13 +66,28 @@
       </rule>
       <rule id="DecisionRule_19lh3ms">
         <inputEntry id="UnaryTests_0bos4jh">
-          <text></text>
+          <text>&gt; 5000</text>
         </inputEntry>
         <inputEntry id="UnaryTests_090rmj6">
-          <text>"RU"</text>
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1uzegy5">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0sk55t8">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0atkxr2">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0plagt4">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0zx46f1">
+          <text></text>
         </inputEntry>
         <outputEntry id="LiteralExpression_10cqaet">
-          <text>"MEDIUM"</text>
+          <text>"HIGH"</text>
         </outputEntry>
       </rule>
       <rule id="DecisionRule_1vn9v0u">
@@ -42,7 +97,204 @@
         <inputEntry id="UnaryTests_0mdwz8s">
           <text></text>
         </inputEntry>
+        <inputEntry id="UnaryTests_06db57r">
+          <text>"CRYPTO"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_045yar4">
+          <text>&lt; 21</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1auyi5k">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1kbgf0x">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1jsq5pu">
+          <text></text>
+        </inputEntry>
         <outputEntry id="LiteralExpression_0743e0r">
+          <text>"HIGH"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0hry0ff">
+        <inputEntry id="UnaryTests_1kl4bf0">
+          <text>&gt; 3000</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_031ti6f">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0eaoyhe">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_08w76ll">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1e38awx">
+          <text>&lt; 10</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1cyhw65">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0vbgmfp">
+          <text>"USD"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0o7bh1r">
+          <text>"REVIEW"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0x97doy">
+        <inputEntry id="UnaryTests_1f4pf91">
+          <text>&gt; 1000</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_12yqwk2">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_04fmji7">
+          <text>"CREDIT_CARD"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_08h5ukk">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1msd70h">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0rqjn15">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_19qgxs8">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1ajhnbq">
+          <text>"REVIEW"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1htr6nb">
+        <inputEntry id="UnaryTests_033tto0">
+          <text>&gt; 2000</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1vtq2cr">
+          <text>"RU","UA","BY"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_18ngkuo">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1p1sib2">
+          <text>&gt; 65</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_03oj9wx">
+          <text>&lt; 50</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_054biyj">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1ena620">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0yb5ieb">
+          <text>"REVIEW"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0pirs8u">
+        <inputEntry id="UnaryTests_1pd191j">
+          <text>&gt; 500</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0heake9">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1g5yoin">
+          <text>"CRYPTO"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ocnl0r">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_031hwdq">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1f1ryu0">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1mo9yhe">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1irs8y3">
+          <text>"MEDIUM"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0n3cwvf">
+        <inputEntry id="UnaryTests_00vziyu">
+          <text>&gt; 1000</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_02b22qu">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0m5wefc">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_07d42yu">
+          <text>&lt; 18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_04576xt">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1ponp5y">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_00g3pnu">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0idzu1p">
+          <text>"MEDIUM"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0twkibi">
+        <inputEntry id="UnaryTests_09bd90v">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0g5l4w1">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_08uh30c">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1cei7oj">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1sja4gp">
+          <text>&lt; 20</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_11v5ctf">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1atuvim">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0lutqo9">
+          <text>"MEDIUM"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_01rrp1t">
+        <inputEntry id="UnaryTests_0hql7fg">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0loqbic">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_06ax6js">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1eri6pz">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1bgz9hg">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0af82lc">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1czq2rj">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1phm0ho">
           <text>"LOW"</text>
         </outputEntry>
       </rule>

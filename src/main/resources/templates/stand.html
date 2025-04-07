@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Stand DMS</title>
+    <!-- Подключаем базовые стили (создадим файл позже) -->
+    <link rel="stylesheet" th:href="@{/css/stand.css}">
+    <!-- Подключаем Chart.js из CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>Test Stand: Decision Making System (DMS)</h1>
+</header>
+
+<main class="stand-container">
+
+    <!-- Блок 1: Управление Генератором -->
+    <section class="stand-block" id="generator-block">
+        <h2>Автоматическая Генерация</h2>
+        <div class="form-group">
+            <label for="generate-count">Количество сообщений:</label>
+            <input type="number" id="generate-count" value="10" min="1" max="10000">
+        </div>
+        <button id="generate-button">Сгенерировать</button>
+        <div class="message-area" id="generator-message"></div>
+    </section>
+
+    <!-- Блок 2: Ручная Отправка -->
+    <section class="stand-block" id="manual-send-block">
+        <h2>Ручная Отправка Транзакции</h2>
+        <form id="manual-send-form">
+            <!-- Добавим поля для InputEventDto -->
+            <div class="form-group">
+                <label for="manual-eventId">Event ID (необязательно):</label>
+                <input type="text" id="manual-eventId" placeholder="Напр.: manual-evt-123">
+            </div>
+            <div class="form-group">
+                <label for="manual-transactionId">Transaction ID:</label>
+                <input type="text" id="manual-transactionId" placeholder="Напр.: txn-abc-456" required>
+            </div>
+            <div class="form-group">
+                <label for="manual-customerId">Customer ID:</label>
+                <input type="text" id="manual-customerId" placeholder="Напр.: cust-789" required>
+            </div>
+            <div class="form-group">
+                <label for="manual-amount">Amount:</label>
+                <input type="number" step="0.01" id="manual-amount" placeholder="Напр.: 199.99" required>
+            </div>
+            <div class="form-group">
+                <label for="manual-currency">Currency:</label>
+                <input type="text" id="manual-currency" placeholder="Напр.: EUR" required maxlength="3">
+            </div>
+            <div class="form-group">
+                <label for="manual-country">Country:</label>
+                <input type="text" id="manual-country" placeholder="Напр.: DE" required maxlength="2">
+            </div>
+            <div class="form-group">
+                <label for="manual-paymentMethod">Payment Method:</label>
+                <select id="manual-paymentMethod" required>
+                    <option value="CREDIT_CARD">CREDIT_CARD</option>
+                    <option value="BANK_TRANSFER">BANK_TRANSFER</option>
+                    <option value="E_WALLET">E_WALLET</option>
+                    <option value="CRYPTO">CRYPTO</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="manual-customerAge">Customer Age:</label>
+                <input type="number" id="manual-customerAge" placeholder="Напр.: 35" required min="0" max="120">
+            </div>
+            <div class="form-group">
+                <label for="manual-customerHistoryScore">History Score:</label>
+                <input type="number" id="manual-customerHistoryScore" placeholder="Напр.: 85" required min="0" max="100">
+            </div>
+            <div class="form-group">
+                <label for="manual-isNewDevice">Is New Device?</label>
+                <select id="manual-isNewDevice" required>
+                    <option value="false">False</option>
+                    <option value="true">True</option>
+                </select>
+            </div>
+            <button type="submit">Отправить</button> <!-- type="submit" для формы -->
+        </form>
+        <div class="message-area" id="manual-send-message"></div>
+    </section>
+
+    <!-- Блок 3: Статистика -->
+    <section class="stand-block" id="statistics-block">
+        <h2>Статистика Решений</h2>
+        <div class="stats-summary">
+            Общее количество: <span id="stats-total">--</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="riskDistributionChart"></canvas>
+        </div>
+        <button id="refresh-stats-button">Обновить статистику</button>
+        <div class="message-area" id="stats-message"></div>
+    </section>
+
+    <!-- Блок 4: Лента Последних Решений -->
+    <section class="stand-block" id="live-log-block">
+        <h2>Последние Решения</h2>
+        <div class="form-group live-log-controls">
+            <label for="log-limit">Показывать:</label>
+            <select id="log-limit">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+            </select>
+            <label for="log-refresh-interval">Обновлять каждые (сек):</label>
+            <select id="log-refresh-interval">
+                <option value="0">Не обновлять</option>
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="30">30</option>
+            </select>
+        </div>
+        <ul id="live-log-list">
+            <!-- Записи будут добавляться сюда через JS -->
+            <li>Нет данных...</li>
+        </ul>
+        <div class="message-area" id="log-message"></div>
+    </section>
+
+</main>
+
+<!-- Подключаем основной скрипт (создадим файл позже) -->
+<script th:src="@{/js/stand.js}"></script>
+</body>
+</html>

@@ -24,3 +24,19 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0 # Ускоряет запуск для локальной разработки
       # Создание топиков при запуске (удобно для примера)
       KAFKA_CREATE_TOPICS: "input-events:1:1,output-decisions:1:1"
+
+  # --- Новый сервис PostgreSQL ---
+  postgres:
+    image: postgres:15 # Выберите актуальную версию
+    container_name: dms-test3-postgres
+    environment:
+      POSTGRES_DB: dms_db         # Имя базы данных
+      POSTGRES_USER: dms_user     # Имя пользователя
+      POSTGRES_PASSWORD: dms_password # Пароль
+    ports:
+      - "5432:5432" # Проброс порта на хост
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Сохранение данных между перезапусками
+
+volumes:
+  postgres_data: # Именованный volume для данных Postgres

@@ -25,14 +25,12 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.util.Objects;
-
+import java.util.UUID; // <-- Импортируем UUID для decisionId
 
 @Service
 public class FlinkDmnJobService implements CommandLineRunner {
 
-    // ... (поля @Value остаются как были) ...
     private static final Logger LOG = LoggerFactory.getLogger(FlinkDmnJobService.class);
-    // ObjectMapper больше не нужен как поле здесь, он будет создаваться в MapFunction
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
@@ -47,10 +45,9 @@ public class FlinkDmnJobService implements CommandLineRunner {
     @Value("${dmn.decision.key}")
     private String dmnDecisionKey;
 
-
     @Override
     public void run(String... args) throws Exception {
-        // ... (логирование старта) ...
+        LOG.info("Starting Flink DMN Job Service..."); // Улучшенное логирование старта
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
@@ -58,111 +55,174 @@ public class FlinkDmnJobService implements CommandLineRunner {
                 .setBootstrapServers(bootstrapServers)
                 .setTopics(inputTopic)
                 .setGroupId(kafkaGroupId)
-                .setStartingOffsets(OffsetsInitializer.latest())
+                .setStartingOffsets(OffsetsInitializer.latest()) // Начинаем с последних сообщений
                 .setValueOnlyDeserializer(new SimpleStringSchema())
+                .setProperty("isolation.level", "read_committed") // Для транзакционной обработки Kafka, если нужно
                 .build();
 
-        // !!! Изменения ниже !!!
-        // DMN Engine и Decision больше не создаются здесь
+        LOG.info("Kafka Source configured for topic: {}", inputTopic);
 
         DataStream<String> inputStream = env.fromSource(kafkaSource, WatermarkStrategy.noWatermarks(), "Kafka Source");
 
         DataStream<String> resultStream = inputStream
-                // Передаем путь и ключ, а не объекты
                 .map(new DmnEvaluationMapFunction(dmnFilePath, dmnDecisionKey))
-                .filter(Objects::nonNull); // Фильтруем ошибки
+                .name("DMN Evaluation") // Даем имя оператору для лучшей читаемости в UI Flink
+                .filter(Objects::nonNull) // Фильтруем null результаты (ошибки обработки)
+                .name("Filter Errors");
 
         KafkaSink<String> kafkaSink = KafkaSink.<String>builder()
                 .setBootstrapServers(bootstrapServers)
                 .setRecordSerializer(KafkaRecordSerializationSchema.builder()
                         .setTopic(outputTopic)
                         .setValueSerializationSchema(new SimpleStringSchema())
-                        .build()
-                )
+                        .build())
+                // .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE) // Гарантия доставки (можно выбрать EXACTLY_ONCE при необходимости и настройке)
                 .build();
+
+        LOG.info("Kafka Sink configured for topic: {}", outputTopic);
 
         resultStream.sinkTo(kafkaSink).name("Kafka Sink");
 
-        LOG.info("Executing Flink job...");
-        env.execute("Flink DMN Kafka Example");
+        LOG.info("Flink job graph constructed. Starting execution...");
+        env.execute("Realtime Financial Transaction Risk Assessment"); // Более осмысленное имя джобы
     }
 
-    // --- Измененный Вложенный класс ---
-    private static class DmnEvaluationMapFunction extends RichMapFunction<String, String> { // <-- Наследуем RichMapFunction
+    // --- Вложенный класс DmnEvaluationMapFunction с изменениями ---
+     static class DmnEvaluationMapFunction extends RichMapFunction<String, String> {
         private static final Logger MAP_LOG = LoggerFactory.getLogger(DmnEvaluationMapFunction.class);
 
-        private final String dmnFilePath; // Путь к файлу (сериализуемый)
-        private final String dmnDecisionKey; // Ключ решения (сериализуемый)
+        private final String dmnFilePath;
+        private final String dmnDecisionKey;
 
-        // Объекты, которые будут инициализированы в open()
-        private transient DmnEngine dmnEngine;
-        private transient DmnDecision decision;
-        private transient ObjectMapper mapper;
+        // transient - не сериализуются и будут инициализированы в open()
+        transient DmnEngine dmnEngine;
+        transient DmnDecision decision;
+        transient ObjectMapper mapper;
 
-        // Конструктор принимает только сериализуемые данные
         public DmnEvaluationMapFunction(String dmnFilePath, String dmnDecisionKey) {
             this.dmnFilePath = dmnFilePath;
             this.dmnDecisionKey = dmnDecisionKey;
         }
 
-        // Метод open() вызывается один раз на TaskManager перед обработкой данных
         @Override
         public void open(Configuration parameters) throws Exception {
             super.open(parameters);
-            MAP_LOG.info("Initializing DmnEvaluationMapFunction...");
+            MAP_LOG.info("Initializing DmnEvaluationMapFunction on TaskManager...");
             try {
-                // Инициализируем здесь
                 this.mapper = new ObjectMapper();
-                this.dmnEngine = DmnEngineConfiguration.createDefaultDmnEngineConfiguration().buildEngine();
+                // Включаем поддержку Java 8 time/Optional, если нужно (не обязательно для текущей структуры)
+                // this.mapper.registerModule(new JavaTimeModule());
+                // this.mapper.registerModule(new Jdk8Module());
 
-                // Загружаем и парсим DMN
+                this.dmnEngine = DmnEngineConfiguration.createDefaultDmnEngineConfiguration().buildEngine();
+                MAP_LOG.info("DMN Engine created.");
+
                 InputStream dmnInputStream = getClass().getClassLoader().getResourceAsStream(dmnFilePath);
                 if (dmnInputStream == null) {
+                    MAP_LOG.error("Cannot find DMN file in classpath: {}", dmnFilePath);
                     throw new RuntimeException("Cannot find DMN file on TaskManager: " + dmnFilePath);
                 }
-                // Ищем решение по ключу
-                this.decision = dmnEngine.parseDecisions(dmnInputStream)
-                        .stream()
+                MAP_LOG.debug("DMN file found: {}", dmnFilePath);
+
+                // Парсим все решения из файла
+                var parsedDecisions = dmnEngine.parseDecisions(dmnInputStream);
+                if (parsedDecisions.isEmpty()) {
+                    MAP_LOG.error("No decisions found in DMN file: {}", dmnFilePath);
+                    throw new RuntimeException("No decisions found in DMN file: " + dmnFilePath);
+                }
+                MAP_LOG.debug("Parsed {} decision(s) from DMN file.", parsedDecisions.size());
+
+                // Ищем нужное решение по ключу
+                this.decision = parsedDecisions.stream()
                         .filter(d -> d.getKey().equals(dmnDecisionKey))
                         .findFirst()
-                        .orElseThrow(() -> new RuntimeException("DMN Decision with key '" + dmnDecisionKey + "' not found in file " + dmnFilePath));
+                        .orElseThrow(() -> {
+                            MAP_LOG.error("DMN Decision with key '{}' not found in file {}", dmnDecisionKey, dmnFilePath);
+                            return new RuntimeException("DMN Decision with key '" + dmnDecisionKey + "' not found in file " + dmnFilePath);
+                        });
 
                 MAP_LOG.info("DMN Engine and Decision '{}' initialized successfully.", dmnDecisionKey);
 
             } catch (Exception e) {
-                MAP_LOG.error("Failed to initialize DMN Engine or parse DMN file", e);
-                throw new RuntimeException("Failed to initialize DmnEvaluationMapFunction", e); // Провалить запуск задачи, если инициализация не удалась
+                MAP_LOG.error("Failed to initialize DMN Engine or parse DMN file: {}", e.getMessage(), e);
+                // Провалить запуск задачи, если инициализация не удалась
+                throw new RuntimeException("Failed to initialize DmnEvaluationMapFunction", e);
             }
         }
 
         @Override
         public String map(String jsonValue) throws Exception {
-            // Проверка на случай, если open() не смог инициализировать (хотя он должен кинуть Exception)
+            // Дополнительная проверка инициализации (хотя open должен был упасть)
             if (this.mapper == null || this.dmnEngine == null || this.decision == null) {
-                MAP_LOG.error("Map function called before successful initialization!");
-                return null; // Или бросить исключение
+                MAP_LOG.error("Map function called before successful initialization! Skipping message: {}", jsonValue);
+                return null; // Пропустить сообщение
             }
 
+            InputEvent event = null;
             try {
-                InputEvent event = mapper.readValue(jsonValue, InputEvent.class);
-                MAP_LOG.debug("Processing event: {}", event);
+                // 1. Десериализация JSON в InputEvent
+                event = mapper.readValue(jsonValue, InputEvent.class);
+                MAP_LOG.info("Processing eventId: {}, transactionId: {}", event.eventId, event.transactionId); // Логируем ID
 
+                // 2. Подготовка переменных для DMN
                 VariableMap variables = Variables.createVariables()
                         .putValue("amount", event.amount)
-                        .putValue("country", event.country);
+                        .putValue("country", event.country)
+                        .putValue("paymentMethod", event.paymentMethod)
+                        .putValue("customerAge", event.customerAge)
+                        .putValue("customerHistoryScore", event.customerHistoryScore)
+                        .putValue("isNewDevice", event.isNewDevice)
+                        .putValue("currency", event.currency);
+                // Добавляем остальные поля, если они будут нужны для DMN в будущем
+                // .putValue("customerId", event.customerId) // Пока не используется в правилах
+                // .putValue("transactionId", event.transactionId) // Пока не используется в правилах
 
+                MAP_LOG.debug("Variables prepared for DMN evaluation: {}", variables);
+
+                // 3. Выполнение DMN-решения
                 DmnDecisionTableResult dmnResult = dmnEngine.evaluateDecisionTable(this.decision, variables);
-                String riskScore = dmnResult.getSingleResult().getSingleEntry();
-                MAP_LOG.debug("DMN evaluation result for eventId {}: {}", event.eventId, riskScore);
+                MAP_LOG.debug("DMN evaluation completed for eventId: {}. Result count: {}", event.eventId, dmnResult.size());
 
-                DecisionResult result = new DecisionResult(event, riskScore);
+                // 4. Получение результата (ожидаем один результат из-за FIRST hit policy)
+                // и одной выходной колонки 'riskLevel')
+                if (dmnResult.isEmpty()) {
+                    MAP_LOG.warn("DMN evaluation for eventId: {} returned no result (no rule matched?). Assigning default or skipping.", event.eventId);
+                    // Можно присвоить дефолтный статус или вернуть null
+                    return null; // Пропускаем, если ни одно правило не сработало (включая дефолтное)
+                }
+                // Используем getSingleResult(), ожидая одну строку результата
+                // Используем getSingleEntry(), ожидая одну выходную колонку ('riskLevel')
+                String riskLevel = dmnResult.getSingleResult().getSingleEntry();
+                MAP_LOG.info("DMN evaluation result for eventId {}: riskLevel = {}", event.eventId, riskLevel);
+
+                // 5. Создание DecisionResult
+                String decisionId = UUID.randomUUID().toString(); // Генерируем уникальный ID для решения
+                DecisionResult result = new DecisionResult(event, decisionId, riskLevel);
+
+                // 6. Сериализация результата в JSON
                 return mapper.writeValueAsString(result);
 
-            } catch (Exception e) {
-                MAP_LOG.error("Failed to process event or evaluate DMN: {} | Error: {}", jsonValue, e.getMessage());
-                // Можно добавить детальное логирование ошибки e
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                // Ошибка парсинга входящего JSON
+                MAP_LOG.error("Failed to parse input JSON: {} | Error: {}", jsonValue, e.getMessage(), e);
                 return null; // Возвращаем null, чтобы отфильтровать
+            } catch (org.camunda.bpm.dmn.engine.impl.DmnEvaluationException e) {
+                // Ошибка во время выполнения DMN (например, неверный тип данных)
+                MAP_LOG.error("DMN evaluation failed for event: {} | Error: {}", event != null ? event.eventId : "N/A", e.getMessage(), e);
+                return null;
+            } catch (Exception e) {
+                // Любая другая неожиданная ошибка
+                MAP_LOG.error("Unexpected error processing event: {} | Error: {}", event != null ? event.eventId : jsonValue, e.getMessage(), e);
+                return null;
             }
+        }
+
+        @Override
+        public void close() throws Exception {
+            // Здесь можно освободить ресурсы, если бы они были (например, закрыть соединения)
+            // DMN Engine и ObjectMapper не требуют явного закрытия
+            MAP_LOG.info("Closing DmnEvaluationMapFunction.");
+            super.close();
         }
     }
 }
