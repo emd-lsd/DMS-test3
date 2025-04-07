@@ -88,16 +88,16 @@ public class FlinkDmnJobService implements CommandLineRunner {
     }
 
     // --- Вложенный класс DmnEvaluationMapFunction с изменениями ---
-    private static class DmnEvaluationMapFunction extends RichMapFunction<String, String> {
+     static class DmnEvaluationMapFunction extends RichMapFunction<String, String> {
         private static final Logger MAP_LOG = LoggerFactory.getLogger(DmnEvaluationMapFunction.class);
 
         private final String dmnFilePath;
         private final String dmnDecisionKey;
 
         // transient - не сериализуются и будут инициализированы в open()
-        private transient DmnEngine dmnEngine;
-        private transient DmnDecision decision;
-        private transient ObjectMapper mapper;
+        transient DmnEngine dmnEngine;
+        transient DmnDecision decision;
+        transient ObjectMapper mapper;
 
         public DmnEvaluationMapFunction(String dmnFilePath, String dmnDecisionKey) {
             this.dmnFilePath = dmnFilePath;
